@@ -66,10 +66,16 @@ void loop() {
     digitalWrite(transistorPin, HIGH);
     delay(1000);
 
-  int letture[0];
-//  for(int i=1; i=10; i++)
+  int valoriLetture[0];
+  int numeroLetture = 10;
+  for(int i=0; i=numeroLetture; i++) {
+    valoriLetture[i] = analogRead(A0);
+        lcd.setCursor(i,0);
+        lcd.print(F("."));
+    delay(500);
+  }
     
-    int a1 = analogRead(A0);
+/*    int a1 = analogRead(A0);
         lcd.setCursor(0,0);
         lcd.print(F("."));
     delay(500);
@@ -109,10 +115,16 @@ void loop() {
         lcd.setCursor(9,0);
         lcd.print(F("."));
     delay(500);
+*/
 
     digitalWrite(transistorPin, LOW);
-    int acquaPianta = (a1 + a2 + a3 + a4 + a5 + a6 + a7 + a8 + a9 + a10)/10;
-    int h = map(acquaPianta, 340, 1022, 100, 0);
+
+    for (int i=0; i=numeroLetture; i++){
+      int acquaPianta = acquaPianta + valoriLetture[i];
+    }
+    int umidita = acquaPianta/numeroLetture;
+//    int acquaPianta = (a1 + a2 + a3 + a4 + a5 + a6 + a7 + a8 + a9 + a10)/10;
+    int h = map(umidita, 340, 1022, 100, 0);
     h = constrain(h, 0, 100);
 
     
