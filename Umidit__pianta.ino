@@ -1,40 +1,40 @@
-//Libreria LiquidCrystal I2C
+//Display LiquidCrystal I2C
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
 LiquidCrystal_I2C lcd(0x27, 20, 4);
 
-//Libreria Sensore temperatura
+//Temperature sensor
 #include "DHT.h"
 #define DHTPIN 13
 #define DHTTYPE DHT11
 DHT dht(DHTPIN, DHTTYPE);
 
-//Attivazione tramite pulsate e transistor
-const int pinPulsante = 7;
+//Transistor and botton
+const int bottonPin = 7;
 const int transistorPin = 2;
 
-//Variabili
-int numeroLetture = 9;
-int sommaValoriLetture = 0;
-int valoriLetture[9];
-int umiditaRilevata;
+//Var
+int numberScans = 9;
+int sumScans = 0;
+int scanning[9];
+int partialH;
 int h;
+
 
 void setup() {
   lcd.init();
   lcd.backlight();
 
-  pinMode(pinPulsante, INPUT);
-  pinMode(pinPulsante, OUTPUT);
-
+  pinMode(bottonPin, INPUT);
+  pinMode(transistorPin, OUTPUT);
 
   dht.begin();
 
-  Serial.begin(115200);
+  Serial.begin(9600);
 
   lcd.clear();
-  lcd.setCursor(3, 0);
-  lcd.print(F("Benvenuto!"));
+  lcd.setCursor(4, 0);
+  lcd.print(F("Welcome!"));
   delay(2500);
 }
 
@@ -44,75 +44,82 @@ void loop() {
   float t = dht.readTemperature();
 
   if (isnan(h) || isnan(t)) {
+    
     Serial.println(F("Failed to read from DHT sensor!"));
+    
+    lcd.setCursor(0, 0);
+    lcd.print(F("Temp: "));
+    lcd.print("N.D.");
+    lcd.print(F(" C"));
+    lcd.setCursor(0, 1);
+    lcd.print(F("Humidity: "));
+    lcd.print("N.D.");
+    lcd.print(F("%"));
+    
     return;
   }
 
-  Serial.print(F("Umidità: "));
+  Serial.print(F("Humidity: "));
   Serial.print(h);
-  Serial.print(F("%  Temperatura: "));
+  Serial.print(F("%  Temperature: "));
   Serial.print(t);
   Serial.println(F("°C "));
-
 
   lcd.setCursor(0, 0);
   lcd.print(F("Temp: "));
   lcd.print(t);
   lcd.print(F(" C"));
-
   lcd.setCursor(0, 1);
-  lcd.print(F("Umidita: "));
+  lcd.print(F("Humidity: "));
   lcd.print(h);
   lcd.print(F("%"));
 
-  int statoPulsante = digitalRead(pinPulsante);
+  int bottonState = digitalRead(bottonPin);
 
-  if (statoPulsante == HIGH) {
+  if (bottonState == HIGH) {
     lcd.clear();
     digitalWrite(transistorPin, HIGH);
     delay(1000);
 
-    for (int i = 0; i <= numeroLetture; i++) {
-      valoriLetture[i] = analogRead(A0);
+    for (int i = 0; i <= numberScans; i++) {
+      scanning[i] = analogRead(A0);
       lcd.setCursor(i, 0);
       lcd.print(F("."));
-                  Serial.println(valoriLetture[i]);
+      Serial.println(scanning[i]);
 
-      sommaValoriLetture = sommaValoriLetture + valoriLetture[i];
+      sumScans = sumScans + scanning[i];
 
       delay(500);
     }
-                  Serial.println(sommaValoriLetture);
+    Serial.println(sumScans);
 
     digitalWrite(transistorPin, LOW);
 
-    umiditaRilevata = sommaValoriLetture / (numeroLetture + 1);
-            Serial.println(umiditaRilevata);
+    partialH = sumScans / (numberScans + 1);
+    Serial.println(partialH);
 
-    h = map(umiditaRilevata, 400, 1015, 100, 0);
+    h = map(partialH, 400, 1015, 100, 0);
     h = constrain(h, 0, 100);
-    sommaValoriLetture = 0;
+    sumScans = 0;
 
 
     lcd.clear();
     lcd.setCursor(0, 0);
-    lcd.print("Rilevato: " + String(h) + "%");
+    lcd.print("Detected: " + String(h) + "%");
     lcd.setCursor(0, 1);
-    lcd.print(F("Limite : 10%"));
+    lcd.print(F("Limit: 10%"));
     delay(3000);
-          lcd.clear();
+    lcd.clear();
 
     if (h < 10) {
       lcd.clear();
       lcd.setCursor(0, 0);
-      lcd.print(F("Innaffia la"));
-      lcd.setCursor(0, 1);
-      lcd.print(F("pianta!"));
+      lcd.print(F("Water the plant!"));
       delay(2500);
       lcd.clear();
     }
   }
 
-  delay(50);
+  delay(100);
 
 }
